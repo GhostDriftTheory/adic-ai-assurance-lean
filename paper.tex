@@ -1,0 +1,166 @@
+\documentclass{article}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{AI Assurance as a Category-Theoretic Preservation Structure:\\
+       A Lean 4 Formalization}
+\author{GhostDrift Mathematical Institute}
+\date{2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+AI governance in multi-organizational deployments is difficult because operational claims often cross institutional boundaries. A model may be trained by one organization, integrated by another, monitored by a third, and audited by a fourth. When governance claims rest only on self-attestation, there is no structural guarantee that the evidence needed for inspection remains available after these systems are composed.
+
+The main claim formalized here is that inspectable AI governance requires a faithful evidence layer. Without such a layer, governance-relevant distinctions, including different judgment grounds, responsibility paths, and audit traces, can collapse to the same operational appearance. This is a structural necessity, not a policy preference.
+
+This paper presents a Lean 4 formalization of this claim. We construct the evidence category as the Grothendieck construction of an indexed fiber family over the operational category, prove the relevant preservation theorems, and exhibit a finite counterexample establishing the necessity direction.
+
+\section{Mathematical Preliminaries}
+
+A category consists of objects, morphisms between objects, identity morphisms, and associative composition. A functor maps objects and morphisms from one category to another while preserving identities and composition. A functor is faithful when its action on each hom-set is injective.
+
+Given a functor $F : O \to \mathbf{Cat}$, the Grothendieck construction $\int_O F$ is the category whose objects are pairs $(X,a)$ with $X \in O$ and $a \in F_X$, and whose morphisms $(X,a) \to (Y,b)$ are pairs $(f,\alpha)$ with $f : X \to Y$ and $\alpha : F(f)(a) \to b$.
+
+An adjunction $L \dashv R$ between two categories is a natural bijection between morphisms $L X \to Y$ and morphisms $X \to RY$. A section of a forgetful functor $U : E \to O$ is a functor $S : O \to E$ such that $U \circ S$ is the identity functor on $O$, using the composition convention of the Lean formalization.
+
+\begin{lemma}[faithful\_of\_section]
+If $S : O \to E$ and $U : E \to O$ satisfy $U \circ S = \mathrm{Id}_O$, then $S$ is faithful.
+\end{lemma}
+
+\section{The AI Assurance Structure}
+
+\begin{definition}[IndexedAssurance]
+An \emph{IndexedAssurance} structure is a tuple
+\[
+  (O,F,\mathrm{push},\mathrm{pull},\dashv,
+   \mathrm{push\_id},\mathrm{push\_comp},
+   \mathrm{pull\_id},\mathrm{pull\_comp},
+   s,\mathrm{standard\_push},BC)
+\]
+with the following components:
+\begin{itemize}
+\item $O$ is the operational category.
+\item $F_X$ is the evidence fiber category at $X \in O$.
+\item $f_!$ is the push functor for $f : X \to Y$.
+\item $f^*$ is the pull functor for $f : X \to Y$.
+\item $f_! \dashv f^*$ is an adjunction.
+\item $\mathrm{push\_id}$ states that $f_! = \mathrm{Id}$ when $f = \mathrm{id}_X$.
+\item $\mathrm{push\_comp}$ states that $(g \circ f)_! = g_! \circ f_!$.
+\item $\mathrm{pull\_id}$ states that $f^* = \mathrm{Id}$ when $f = \mathrm{id}_X$.
+\item $\mathrm{pull\_comp}$ states that $(g \circ f)^* = f^* \circ g^*$.
+\item $s_X$ is the standard evidence at $X$.
+\item $\mathrm{standard\_push}$ states that $f_!(s_X)=s_Y$.
+\item $BC$ is the Beck-Chevalley condition for allowed squares, retained as a structural field.
+\end{itemize}
+\end{definition}
+
+\section{The Derived Evidence Category}
+
+The evidence category is derived as
+\[
+  E = \int_O F,
+\]
+the Grothendieck construction of the Lean definition \texttt{toCatFunctor}. Objects are pairs $(X,a)$ with $X \in O$ and $a \in F_X$. Morphisms are pairs $(f,\alpha)$ with $f : X \to Y$ and $\alpha : f_!(a) \to b$.
+
+\begin{definition}[standardSection]
+The standard section $S : O \to E$ is defined by $S(X)=(X,s_X)$ and $S(f)=(f,\mathrm{id}_{s_Y})$, where the identity is transported along \texttt{standard\_push}.
+\end{definition}
+
+\begin{theorem}[section\_eq]
+The Lean formalization proves
+\[
+  U \circ S = \mathrm{Id}_O.
+\]
+\end{theorem}
+
+\begin{corollary}[section\_faithful]
+The standard section $S$ is faithful.
+\end{corollary}
+
+\section{Universal Properties}
+
+\begin{theorem}[opcart\_factor]
+For any $h : (X,a) \to (Z,c)$ in $E$ with $\mathrm{base}(h)=f \circ g$, there exists a unique
+\[
+  \delta : (Y,f_!(a)) \to (Z,c)
+\]
+with $\mathrm{base}(\delta)=g$ and
+\[
+  \mathrm{opcartLift}(f,a) \circ \delta = h.
+\]
+\end{theorem}
+
+\begin{theorem}[cart\_factor]
+For any $h : (Z,c) \to (Y,b)$ in $E$ with $\mathrm{base}(h)=k \circ f$, there exists a unique
+\[
+  \delta : (Z,c) \to (X,f^*(b))
+\]
+with $\mathrm{base}(\delta)=k$ and
+\[
+  \delta \circ \mathrm{cartLift}(f,b) = h.
+\]
+\end{theorem}
+
+The theorem \texttt{opcart\_factor} means that any evidence path over a composed operation factors uniquely through the forward record update. The theorem \texttt{cart\_factor} means that any audit path factors uniquely through the backward audit pullback. Together they state that evidence propagation and audit retrieval are universal, not ad hoc.
+
+\section{The Necessity Counterexample}
+
+\begin{definition}[CollapseCounterexample]
+Let $E$ be the category with objects $\{\mathrm{src},\mathrm{tgt}\}$ and morphisms $\{\mathrm{idSrc},\mathrm{idTgt},\mathrm{traceA},\mathrm{traceB}\}$, where $\mathrm{traceA}\neq\mathrm{traceB}$. Let $O$ be the category with objects $\{\mathrm{src},\mathrm{tgt}\}$ and morphisms $\{\mathrm{idSrc},\mathrm{idTgt},\mathrm{op}\}$. Let $U : E \to O$ map both $\mathrm{traceA}$ and $\mathrm{traceB}$ to $\mathrm{op}$.
+\end{definition}
+
+\begin{theorem}[trace\_distinction\_collapses]
+\[
+  \mathrm{traceA}\neq \mathrm{traceB}
+  \quad\text{and}\quad
+  U(\mathrm{traceA}) = U(\mathrm{traceB}).
+\]
+\end{theorem}
+
+\begin{theorem}[U\_not\_faithful]
+The functor $U$ is not faithful.
+\end{theorem}
+
+\begin{corollary}[forgetting\_trace\_layer\_can\_collapse\_distinctions]
+There exist categories $E$, $O$ and a functor $U : E \to O$ such that $U$ is not faithful.
+\end{corollary}
+
+This counterexample shows that operational sameness does not imply governance sameness. Two morphisms representing distinct judgment grounds or responsibility paths can be identified by a forgetful functor. Therefore, if AI governance requires those distinctions to remain inspectable after composition, a faithful evidence layer is structurally necessary.
+
+\section{Limitations and Future Work}
+
+\begin{itemize}
+\item \texttt{beck\_chevalley} is retained as a structural field. It is not derived from \texttt{adj + push\_comp + pull\_comp} in general. A full proof requires additional coherence conditions specific to each instance.
+\item The formalization covers the mathematical core only. It does not address the translation from formal model to operational practice, real-world AI deployments, or regulatory compliance.
+\item Future work: replace \texttt{beck\_chevalley} with a derived proof for specific instances, for example presheaf categories and polynomial functors. Extend to lax natural transformations for non-strict split conditions.
+\end{itemize}
+
+\section{Conclusion}
+
+The formalization proves that the Grothendieck construction gives a derived evidence category rather than a freely postulated one. The standard section is faithful, opcartesian and cartesian universal properties hold at the TotalCategory level, and the collapse counterexample establishes the necessity direction.
+
+This formalization establishes that AI assurance, understood as the preservation of evidence, responsibility paths, and judgment grounds across organizational composition, has a precise mathematical characterization that is machine-checkable. The claim is not that any deployed AI system satisfies this structure, but that any governance framework claiming inspectability must instantiate it.
+
+\begin{thebibliography}{9}
+
+\bibitem{maclane} Mac Lane, S. \emph{Categories for the Working Mathematician}. Springer, 1971.
+\bibitem{grothendieck} Grothendieck, A. \emph{Revêtements étales et groupe fondamental (SGA 1)}. 1960.
+\bibitem{mathlib} The Mathlib Community. Mathlib4. \url{https://github.com/leanprover-community/mathlib4}
+\bibitem{euaiact} European Parliament. Regulation (EU) 2024/1689 (AI Act). 2024.
+\bibitem{nist} NIST. \emph{AI Risk Management Framework 1.0}. 2023.
+\bibitem{jacobs} Jacobs, B. \emph{Categorical Logic and Type Theory}. Elsevier, 1999.
+
+\end{thebibliography}
+
+\end{document}
