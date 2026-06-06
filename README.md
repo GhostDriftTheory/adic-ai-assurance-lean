@@ -59,4 +59,3 @@ The operational category `O` represents the observable actions of an AI system a
 ## Positioning
 
 This formalization is the mathematical verification core for the ADIC (Advanced Data Integrity by Ledger of Computation) architecture. It establishes that the preservation structure required for inspectable AI governance, traceability, accountability, and auditability after composition, has a precise category-theoretic characterization that can be machine-checked independently.
-
