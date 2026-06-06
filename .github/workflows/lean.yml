@@ -28,19 +28,14 @@ jobs:
           path: ~/.elan/toolchains
           key: ${{ runner.os }}-elan-${{ hashFiles('lean-toolchain') }}
 
-      - name: Cache Lake packages
-        uses: actions/cache@v4
-        with:
-          path: .lake/packages
-          key: ${{ runner.os }}-lake-${{ hashFiles('lakefile.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-lake-
-
       - name: Resolve dependencies
         run: lake update
 
       - name: Get Mathlib cache
-        run: lake exe cache get
+        run: lake exe cache get || true
+
+      - name: Build Mathlib
+        run: lake build Mathlib
 
       - name: Verify AIAssurance.lean
         run: lake env lean AIAssurance.lean
