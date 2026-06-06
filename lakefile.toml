@@ -1,0 +1,11 @@
+name = "AIAssurance"
+version = "0.1.0"
+defaultTargets = ["AIAssurance"]
+
+[[require]]
+name = "mathlib"
+from = "git"
+url = "https://github.com/leanprover-community/mathlib4"
+
+[[lean_lib]]
+name = "AIAssurance"
