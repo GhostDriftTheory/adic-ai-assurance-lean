@@ -313,7 +313,7 @@ theorem governance_identifies_by_quotient
         (governanceQuotientFunctor A F).map g := by
   constructor
   · intro h
-    exact CategoryTheory.Quotient.sound h
+    exact CategoryTheory.Quotient.sound (r := fun {X Y} f g => F.map f = F.map g) h
   · intro h
     exact (CategoryTheory.Quotient.functor_map_eq_iff _ f g).1 h
 
@@ -361,15 +361,9 @@ instance : Category EObj where
     | .traceA, .idTgt => .traceA
     | .traceB, .idTgt => .traceB
     | .idTgt, .idTgt => .idTgt
-  id_comp := by
-    intro X Y f
-    cases f <;> rfl
-  comp_id := by
-    intro X Y f
-    cases f <;> rfl
-  assoc := by
-    intro X Y Z W f g h
-    cases f <;> cases g <;> cases h <;> rfl
+  id_comp := by intro X Y f; fin_cases f <;> rfl
+  comp_id := by intro X Y f; fin_cases f <;> rfl
+  assoc := by intro X Y Z W f g h; fin_cases f <;> fin_cases g <;> fin_cases h <;> rfl
 
 theorem traceA_ne_traceB : EHom.traceA ≠ EHom.traceB := by
   intro h
@@ -398,15 +392,9 @@ instance : Category OObj where
     | .idSrc, .op => .op
     | .op, .idTgt => .op
     | .idTgt, .idTgt => .idTgt
-  id_comp := by
-    intro X Y f
-    cases f <;> rfl
-  comp_id := by
-    intro X Y f
-    cases f <;> rfl
-  assoc := by
-    intro X Y Z W f g h
-    cases f <;> cases g <;> cases h <;> rfl
+  id_comp := by intro X Y f; fin_cases f <;> rfl
+  comp_id := by intro X Y f; fin_cases f <;> rfl
+  assoc := by intro X Y Z W f g h; fin_cases f <;> fin_cases g <;> fin_cases h <;> rfl
 
 /-- Forgetful operational view: both evidence traces become the same operation. -/
 def U : EObj ⥤ OObj where
@@ -420,8 +408,8 @@ def U : EObj ⥤ OObj where
     | .idTgt => .idTgt
     | .traceA => OHom.op
     | .traceB => OHom.op
-  map_id := by intro X; cases X <;> rfl
-  map_comp := by intro X Y Z f g; cases f <;> cases g <;> simp [CategoryTheory.comp_id, CategoryTheory.id_comp]
+  map_id := by intro X; fin_cases X <;> rfl
+  map_comp := by intro X Y Z f g; fin_cases f <;> fin_cases g <;> rfl
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
