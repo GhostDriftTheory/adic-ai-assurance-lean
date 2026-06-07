@@ -89,9 +89,11 @@ def toCatFunctor : O ⥤ Cat.{vF, uF} where
   obj X := Cat.of (A.Fiber X)
   map {X Y} f := A.push f
   map_id X := by
-    simp [A.push_id X]
+    simp only [Cat.id_eq_id]
+    exact A.push_id X
   map_comp {X Y Z} f g := by
-    simp [A.push_comp f g]
+    simp only [Cat.comp_eq_comp]
+    exact A.push_comp f g
 
 /-- The derived total evidence category. -/
 abbrev EvidenceCategory (A : IndexedAssurance.{uO, vO, uF, vF} O) :=
@@ -422,12 +424,8 @@ def U : EObj ⥤ OObj where
     | .idTgt => .idTgt
     | .traceA => OHom.op
     | .traceB => OHom.op
-  map_id := by
-    intro X
-    cases X <;> rfl
-  map_comp := by
-    intro X Y Z f g
-    cases f <;> cases g <;> rfl
+  map_id := by intro X; cases X <;> rfl
+  map_comp := by intro X Y Z f g; cases f <;> cases g <;> rfl
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
