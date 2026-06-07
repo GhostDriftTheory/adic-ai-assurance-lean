@@ -90,13 +90,11 @@ attribute [local instance] IndexedAssurance.fiberCategory
 /-- The Cat-valued functor whose Grothendieck construction is the evidence category. -/
 def toCatFunctor : O ⥤ Cat.{vF, uF} where
   obj X := Cat.of (A.Fiber X)
-  map {X Y} f := (A.push f).toCatHom
+  map {X Y} f := A.push f
   map_id X := by
-    apply Cat.ext
-    exact A.push_id X
+    simp [A.push_id X]
   map_comp {X Y Z} f g := by
-    apply Cat.ext
-    exact A.push_comp f g
+    simp [A.push_comp f g]
 
 /-- The derived total evidence category. -/
 abbrev EvidenceCategory (A : IndexedAssurance.{uO, vO, uF, vF} O) :=
@@ -391,12 +389,12 @@ theorem cart_factor
 
 /-- Governance quotient induced by a functor. -/
 abbrev GovernanceQuotient {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) : Type _ :=
-  CategoryTheory.Quotient F.homRel
+  CategoryTheory.Quotient (fun {X Y} f g => F.map f = F.map g)
 
 /-- Quotient functor identifying exactly arrows with the same meaning. -/
 def governanceQuotientFunctor {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
     EvidenceCategory A ⥤ GovernanceQuotient A F :=
-  CategoryTheory.Quotient.functor F.homRel
+  CategoryTheory.Quotient.functor (fun {X Y} f g => F.map f = F.map g)
 
 /-- Governance identification is a theorem by quotient construction. -/
 theorem governance_identifies_by_quotient
@@ -407,9 +405,9 @@ theorem governance_identifies_by_quotient
         (governanceQuotientFunctor A F).map g := by
   constructor
   · intro h
-    exact CategoryTheory.Quotient.sound (r := F.homRel) h
+    exact CategoryTheory.Quotient.sound h
   · intro h
-    exact (CategoryTheory.Quotient.functor_map_eq_iff (F.homRel) f g).1 h
+    exact (CategoryTheory.Quotient.functor_map_eq_iff _ f g).1 h
 
 /-- Yoneda reflects isomorphisms. -/
 theorem yoneda_reflects_iso {X Y : EvidenceCategory A} (f : X ⟶ Y)
@@ -429,26 +427,32 @@ it shows that forgetting the trace layer can identify distinct
 governance-relevant evidence morphisms.
 -/
 
-/-- Evidence objects: a single object carrying two distinct evidence traces. -/
+/-- Evidence objects: one source and one target. -/
 inductive EObj : Type
-  | pt : EObj
+  | src : EObj
+  | tgt : EObj
 
-/-- Evidence morphisms: two distinct traces over the same visible operation. -/
+/-- Evidence morphisms: two distinct traces from source to target. -/
 inductive EHom : EObj → EObj → Type
-  | traceA : EHom EObj.pt EObj.pt
-  | traceB : EHom EObj.pt EObj.pt
+  | idSrc : EHom EObj.src EObj.src
+  | idTgt : EHom EObj.tgt EObj.tgt
+  | traceA : EHom EObj.src EObj.tgt
+  | traceB : EHom EObj.src EObj.tgt
 
 instance : Category EObj where
   Hom := EHom
   id := fun X =>
     match X with
-    | .pt => .traceA
+    | .src => .idSrc
+    | .tgt => .idTgt
   comp := fun {X Y Z} f g =>
     match f, g with
-    | .traceA, .traceA => .traceA
-    | .traceA, .traceB => .traceB
-    | .traceB, .traceA => .traceB
-    | .traceB, .traceB => .traceB
+    | .idSrc, .idSrc => .idSrc
+    | .idSrc, .traceA => .traceA
+    | .idSrc, .traceB => .traceB
+    | .traceA, .idTgt => .traceA
+    | .traceB, .idTgt => .traceB
+    | .idTgt, .idTgt => .idTgt
   id_comp := by
     intro X Y f
     cases f <;> rfl
@@ -463,22 +467,29 @@ theorem traceA_ne_traceB : EHom.traceA ≠ EHom.traceB := by
   intro h
   cases h
 
-/-- Operational objects: a single observable state. -/
+/-- Operational objects: one source and one target. -/
 inductive OObj : Type
-  | pt : OObj
+  | src : OObj
+  | tgt : OObj
 
-/-- Operational morphisms: a single visible operation. -/
+/-- Operational morphisms: a single visible operation from source to target. -/
 inductive OHom : OObj → OObj → Type
-  | op : OHom OObj.pt OObj.pt
+  | idSrc : OHom OObj.src OObj.src
+  | idTgt : OHom OObj.tgt OObj.tgt
+  | op : OHom OObj.src OObj.tgt
 
 instance : Category OObj where
   Hom := OHom
   id := fun X =>
     match X with
-    | .pt => .op
+    | .src => .idSrc
+    | .tgt => .idTgt
   comp := fun {X Y Z} f g =>
     match f, g with
-    | .op, .op => .op
+    | .idSrc, .idSrc => .idSrc
+    | .idSrc, .op => .op
+    | .op, .idTgt => .op
+    | .idTgt, .idTgt => .idTgt
   id_comp := by
     intro X Y f
     cases f <;> rfl
@@ -489,28 +500,24 @@ instance : Category OObj where
     intro X Y Z W f g h
     cases f <;> cases g <;> cases h <;> rfl
 
-instance OHom_subsingleton {X Y : OObj} : Subsingleton (OHom X Y) where
-  elim f g := by
-    cases f <;> cases g <;> rfl
-
 /-- Forgetful operational view: both evidence traces become the same operation. -/
 def U : EObj ⥤ OObj where
   obj := fun X =>
     match X with
-    | .pt => .pt
+    | .src => .src
+    | .tgt => .tgt
   map := fun {X Y} f =>
     match f with
+    | .idSrc => .idSrc
+    | .idTgt => .idTgt
     | .traceA => OHom.op
     | .traceB => OHom.op
-  map_id := fun X =>
-    match X with
-    | .pt => rfl
-  map_comp := fun f g =>
-    match f, g with
-    | .traceA, .traceA => rfl
-    | .traceA, .traceB => rfl
-    | .traceB, .traceA => rfl
-    | .traceB, .traceB => rfl
+  map_id := by
+    intro X
+    cases X <;> rfl
+  map_comp := by
+    intro X Y Z f g
+    cases f <;> cases g <;> rfl
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
