@@ -62,10 +62,7 @@ structure IndexedAssurance (O : Type uO) [Category.{vO} O] where
   standard : ∀ X : O, Fiber X
   standard_push :
     ∀ {X Y : O} (f : X ⟶ Y),
-      @Functor.obj
-        (Fiber X) (fiberCategory X)
-        (Fiber Y) (fiberCategory Y)
-        (push f) (standard X) = standard Y
+      (push f).obj (standard X) = standard Y
   beck_chevalley :
     ∀ {X' X Y' Y : O}
       (u : X' ⟶ X) (f' : X' ⟶ Y') (f : X ⟶ Y) (v : Y' ⟶ Y),
@@ -144,36 +141,19 @@ theorem section_faithful : A.standardSection.Faithful :=
 /-- Opcartesian lift candidate supplied by the Grothendieck construction. -/
 def opcartLift {X Y : O} (f : X ⟶ Y) (a : A.Fiber X) :
     (⟨X, a⟩ : EvidenceCategory A) ⟶
-      ⟨Y, @Functor.obj
-        (A.Fiber X) (A.fiberCategory X)
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.push f) a⟩ :=
+      ⟨Y, (A.push f).obj a⟩ :=
   Grothendieck.toTransport (F := A.toCatFunctor) (⟨X, a⟩ : EvidenceCategory A) f
 
 /-- Cartesian lift candidate built from the counit of `push f ⊣ pull f`. -/
 def cartLift {X Y : O} (f : X ⟶ Y) (b : A.Fiber Y) :
-    (⟨X, @Functor.obj
-      (A.Fiber Y) (A.fiberCategory Y)
-      (A.Fiber X) (A.fiberCategory X)
-      (A.pull f) b⟩ : EvidenceCategory A) ⟶ ⟨Y, b⟩ where
+    (⟨X, (A.pull f).obj b⟩ : EvidenceCategory A) ⟶ ⟨Y, b⟩ where
   base := f
   fiber := (A.adj f).counit.app b
 
 /-- Strict split law for forward transport. -/
 theorem push_opcart_split
     {X Y Z : O} (f : X ⟶ Y) (g : Y ⟶ Z) (a : A.Fiber X) :
-    @Functor.obj
-      (A.Fiber X) (A.fiberCategory X)
-      (A.Fiber Z) (A.fiberCategory Z)
-      (A.push (f ≫ g)) a =
-    @Functor.obj
-      (A.Fiber Y) (A.fiberCategory Y)
-      (A.Fiber Z) (A.fiberCategory Z)
-      (A.push g)
-      (@Functor.obj
-        (A.Fiber X) (A.fiberCategory X)
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.push f) a) := by
+    (A.push (f ≫ g)).obj a = (A.push g).obj ((A.push f).obj a) := by
   rw [A.push_comp f g]
   rfl
 
@@ -183,20 +163,8 @@ theorem push_opcart_split
 theorem opcart_univ
     {X Y Z : O} (f : X ⟶ Y) (g : Y ⟶ Z)
     (a : A.Fiber X) (c : A.Fiber Z)
-    (γ :
-      @Functor.obj
-        (A.Fiber X) (A.fiberCategory X)
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.push (f ≫ g)) a ⟶ c) :
-    ∃! (δ :
-      @Functor.obj
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.push g)
-        (@Functor.obj
-          (A.Fiber X) (A.fiberCategory X)
-          (A.Fiber Y) (A.fiberCategory Y)
-          (A.push f) a) ⟶ c),
+    (γ : (A.push (f ≫ g)).obj a ⟶ c) :
+    ∃! (δ : (A.push g).obj ((A.push f).obj a) ⟶ c),
       δ = eqToHom (A.push_opcart_split f g a).symm ≫ γ := by
   refine ⟨eqToHom (A.push_opcart_split f g a).symm ≫ γ, rfl, ?_⟩
   intro δ hδ
@@ -205,18 +173,7 @@ theorem opcart_univ
 /-- Strict split law for backward audit pullback. -/
 theorem pull_cart_split
     {X Y Z : O} (f : X ⟶ Y) (g : Y ⟶ Z) (b : A.Fiber Z) :
-    @Functor.obj
-      (A.Fiber Z) (A.fiberCategory Z)
-      (A.Fiber X) (A.fiberCategory X)
-      (A.pull (f ≫ g)) b =
-    @Functor.obj
-      (A.Fiber Y) (A.fiberCategory Y)
-      (A.Fiber X) (A.fiberCategory X)
-      (A.pull f)
-      (@Functor.obj
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.pull g) b) := by
+    (A.pull (f ≫ g)).obj b = (A.pull f).obj ((A.pull g).obj b) := by
   rw [A.pull_comp f g]
   rfl
 
@@ -225,35 +182,13 @@ the adjunction `push f ⊣ pull f`. -/
 theorem cart_univ
     {X Y Z : O} (f : X ⟶ Y) (k : Z ⟶ X)
     (b : A.Fiber Y) (c : A.Fiber Z)
-    (α :
-      @Functor.obj
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.push (k ≫ f)) c ⟶ b) :
-    ∃! (β :
-      @Functor.obj
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.Fiber X) (A.fiberCategory X)
-        (A.push k) c ⟶
-      @Functor.obj
-        (A.Fiber Y) (A.fiberCategory Y)
-        (A.Fiber X) (A.fiberCategory X)
-        (A.pull f) b),
+    (α : (A.push (k ≫ f)).obj c ⟶ b) :
+    ∃! (β : (A.push k).obj c ⟶ (A.pull f).obj b),
       β =
-        (A.adj f).homEquiv
-          (@Functor.obj
-            (A.Fiber Z) (A.fiberCategory Z)
-            (A.Fiber X) (A.fiberCategory X)
-            (A.push k) c)
-          b
+        (A.adj f).homEquiv ((A.push k).obj c) b
           (eqToHom (A.push_opcart_split k f c).symm ≫ α) := by
   refine ⟨
-    (A.adj f).homEquiv
-      (@Functor.obj
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.Fiber X) (A.fiberCategory X)
-        (A.push k) c)
-      b
+    (A.adj f).homEquiv ((A.push k).obj c) b
       (eqToHom (A.push_opcart_split k f c).symm ≫ α),
     rfl,
     ?_⟩
@@ -272,23 +207,14 @@ theorem opcart_factor
     (a : A.Fiber X) (c : A.Fiber Z)
     (h : (⟨X, a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩)
     (hbase : h.base = f ≫ g) :
-    ∃! (δ : (⟨Y,
-            @Functor.obj
-              (A.Fiber X) (A.fiberCategory X)
-              (A.Fiber Y) (A.fiberCategory Y)
-              (A.push f) a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩),
+    ∃! (δ : (⟨Y, (A.push f).obj a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩),
         δ.base = g ∧
           A.opcartLift f a ≫ δ = h := by
   cases h with
   | mk hb hf =>
   dsimp at hbase
   subst hb
-  let δ₀ :
-      (⟨Y,
-        @Functor.obj
-          (A.Fiber X) (A.fiberCategory X)
-          (A.Fiber Y) (A.fiberCategory Y)
-          (A.push f) a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩ :=
+  let δ₀ : (⟨Y, (A.push f).obj a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩ :=
     { base := g
       fiber := by
         change (A.push g).obj ((A.push f).obj a) ⟶ c
@@ -321,12 +247,7 @@ theorem cart_factor
     (b : A.Fiber Y) (c : A.Fiber Z)
     (h : (⟨Z, c⟩ : EvidenceCategory A) ⟶ ⟨Y, b⟩)
     (hbase : h.base = k ≫ f) :
-    ∃! (δ : (⟨Z, c⟩ : EvidenceCategory A) ⟶
-            ⟨X,
-            @Functor.obj
-              (A.Fiber Y) (A.fiberCategory Y)
-              (A.Fiber X) (A.fiberCategory X)
-              (A.pull f) b⟩),
+    ∃! (δ : (⟨Z, c⟩ : EvidenceCategory A) ⟶ ⟨X, (A.pull f).obj b⟩),
         δ.base = k ∧
           δ ≫ A.cartLift f b = h := by
   cases h with
@@ -334,21 +255,10 @@ theorem cart_factor
   dsimp at hbase
   subst hb
   set ev_wit :=
-    (A.adj f).homEquiv
-      (@Functor.obj
-        (A.Fiber Z) (A.fiberCategory Z)
-        (A.Fiber X) (A.fiberCategory X)
-        (A.push k) c)
-      b
+    (A.adj f).homEquiv ((A.push k).obj c) b
       (eqToHom (A.push_opcart_split k f c).symm ≫ hf)
     with ev_wit_def
-  let δ₀ :
-      (⟨Z, c⟩ : EvidenceCategory A) ⟶
-        ⟨X,
-        @Functor.obj
-          (A.Fiber Y) (A.fiberCategory Y)
-          (A.Fiber X) (A.fiberCategory X)
-          (A.pull f) b⟩ :=
+  let δ₀ : (⟨Z, c⟩ : EvidenceCategory A) ⟶ ⟨X, (A.pull f).obj b⟩ :=
     { base := k
       fiber := by
         change (A.push k).obj c ⟶ (A.pull f).obj b
