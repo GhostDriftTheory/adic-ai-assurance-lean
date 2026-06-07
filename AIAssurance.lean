@@ -429,32 +429,26 @@ it shows that forgetting the trace layer can identify distinct
 governance-relevant evidence morphisms.
 -/
 
-/-- Evidence objects: one source and one target. -/
+/-- Evidence objects: a single object carrying two distinct evidence traces. -/
 inductive EObj : Type
-  | src : EObj
-  | tgt : EObj
+  | pt : EObj
 
-/-- Evidence morphisms: two distinct traces from source to target. -/
+/-- Evidence morphisms: two distinct traces over the same visible operation. -/
 inductive EHom : EObj → EObj → Type
-  | idSrc : EHom EObj.src EObj.src
-  | idTgt : EHom EObj.tgt EObj.tgt
-  | traceA : EHom EObj.src EObj.tgt
-  | traceB : EHom EObj.src EObj.tgt
+  | traceA : EHom EObj.pt EObj.pt
+  | traceB : EHom EObj.pt EObj.pt
 
 instance : Category EObj where
   Hom := EHom
   id := fun X =>
     match X with
-    | .src => .idSrc
-    | .tgt => .idTgt
+    | .pt => .traceA
   comp := fun {X Y Z} f g =>
     match f, g with
-    | .idSrc, .idSrc => .idSrc
-    | .idSrc, .traceA => .traceA
-    | .idSrc, .traceB => .traceB
-    | .traceA, .idTgt => .traceA
-    | .traceB, .idTgt => .traceB
-    | .idTgt, .idTgt => .idTgt
+    | .traceA, .traceA => .traceA
+    | .traceA, .traceB => .traceB
+    | .traceB, .traceA => .traceB
+    | .traceB, .traceB => .traceB
   id_comp := by
     intro X Y f
     cases f <;> rfl
@@ -469,29 +463,22 @@ theorem traceA_ne_traceB : EHom.traceA ≠ EHom.traceB := by
   intro h
   cases h
 
-/-- Operational objects: one source and one target. -/
+/-- Operational objects: a single observable state. -/
 inductive OObj : Type
-  | src : OObj
-  | tgt : OObj
+  | pt : OObj
 
-/-- Operational morphisms: a single visible operation from source to target. -/
+/-- Operational morphisms: a single visible operation. -/
 inductive OHom : OObj → OObj → Type
-  | idSrc : OHom OObj.src OObj.src
-  | idTgt : OHom OObj.tgt OObj.tgt
-  | op : OHom OObj.src OObj.tgt
+  | op : OHom OObj.pt OObj.pt
 
 instance : Category OObj where
   Hom := OHom
   id := fun X =>
     match X with
-    | .src => .idSrc
-    | .tgt => .idTgt
+    | .pt => .op
   comp := fun {X Y Z} f g =>
     match f, g with
-    | .idSrc, .idSrc => .idSrc
-    | .idSrc, .op => .op
-    | .op, .idTgt => .op
-    | .idTgt, .idTgt => .idTgt
+    | .op, .op => .op
   id_comp := by
     intro X Y f
     cases f <;> rfl
@@ -510,16 +497,20 @@ instance OHom_subsingleton {X Y : OObj} : Subsingleton (OHom X Y) where
 def U : EObj ⥤ OObj where
   obj := fun X =>
     match X with
-    | .src => .src
-    | .tgt => .tgt
+    | .pt => .pt
   map := fun {X Y} f =>
     match f with
-    | .idSrc => .idSrc
-    | .idTgt => .idTgt
     | .traceA => OHom.op
     | .traceB => OHom.op
-  map_id := fun X => Subsingleton.elim _ _
-  map_comp := fun f g => Subsingleton.elim _ _
+  map_id := fun X =>
+    match X with
+    | .pt => rfl
+  map_comp := fun f g =>
+    match f, g with
+    | .traceA, .traceA => rfl
+    | .traceA, .traceB => rfl
+    | .traceB, .traceA => rfl
+    | .traceB, .traceB => rfl
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
