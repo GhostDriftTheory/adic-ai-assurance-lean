@@ -5,6 +5,7 @@ defaultTargets = ["AIAssurance"]
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
+rev = "v4.14.0"
 
 [[lean_lib]]
 name = "AIAssurance"
