@@ -88,12 +88,8 @@ attribute [local instance] IndexedAssurance.fiberCategory
 def toCatFunctor : O ⥤ Cat.{vF, uF} where
   obj X := Cat.of (A.Fiber X)
   map {X Y} f := A.push f
-  map_id X := by
-    simp only [Cat.id_eq_id]
-    exact A.push_id X
-  map_comp {X Y Z} f g := by
-    simp only [Cat.comp_eq_comp]
-    exact A.push_comp f g
+  map_id X := A.push_id X
+  map_comp {X Y Z} f g := A.push_comp f g
 
 /-- The derived total evidence category. -/
 abbrev EvidenceCategory (A : IndexedAssurance.{uO, vO, uF, vF} O) :=
@@ -142,9 +138,9 @@ theorem section_faithful : A.standardSection.Faithful :=
 
 /-- Opcartesian lift candidate supplied by the Grothendieck construction. -/
 def opcartLift {X Y : O} (f : X ⟶ Y) (a : A.Fiber X) :
-    (⟨X, a⟩ : EvidenceCategory A) ⟶
-      ⟨Y, (A.push f).obj a⟩ :=
-  Grothendieck.toTransport (F := A.toCatFunctor) (⟨X, a⟩ : EvidenceCategory A) f
+    (⟨X, a⟩ : EvidenceCategory A) ⟶ ⟨Y, (A.push f).obj a⟩ where
+  base := f
+  fiber := 𝟙 _
 
 /-- Cartesian lift candidate built from the counit of `push f ⊣ pull f`. -/
 def cartLift {X Y : O} (f : X ⟶ Y) (b : A.Fiber Y) :
@@ -225,14 +221,14 @@ theorem opcart_factor
   · refine Grothendieck.ext
       (A.opcartLift f a ≫ δ₀)
       { base := f ≫ g, fiber := hf } (by rfl) ?_
-    simp [δ₀, opcartLift, Grothendieck.toTransport]
+    simp [δ₀, opcartLift, Grothendieck.comp]
   · intro δ hδ
     rcases hδ with ⟨hδbase, hδfact⟩
     refine Grothendieck.ext δ δ₀ hδbase ?_
     have hfib := congr_arg_heq
       (fun q : (⟨X, a⟩ : EvidenceCategory A) ⟶ ⟨Z, c⟩ => q.fiber)
       hδfact
-    simp [opcartLift, Grothendieck.toTransport] at hfib
+    simp [opcartLift, Grothendieck.comp] at hfib
     exact eq_of_heq <|
       (eqToHom_comp_heq δ.fiber (by rw [hδbase])).trans <|
         hfib.trans (eqToHom_comp_heq hf (A.push_opcart_split f g a).symm).symm
@@ -425,7 +421,7 @@ def U : EObj ⥤ OObj where
     | .traceA => OHom.op
     | .traceB => OHom.op
   map_id := by intro X; cases X <;> rfl
-  map_comp := by intro X Y Z f g; cases f <;> cases g <;> rfl
+  map_comp := by intro X Y Z f g; cases f <;> cases g <;> simp [CategoryTheory.comp_id, CategoryTheory.id_comp]
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
