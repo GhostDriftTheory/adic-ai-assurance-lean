@@ -295,14 +295,29 @@ theorem cart_factor
         (by rw [hδbase]; rfl)).trans <|
         hfib.trans (eqToHom_comp_heq hf (A.push_opcart_split k f c).symm).symm
 
+/-- The congruence relation induced by a functor: two morphisms are related
+when they have the same image under F. -/
+def functorRel {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
+    HomRel (EvidenceCategory A) :=
+  fun {X Y} f g => F.map f = F.map g
+
+instance functorRelCongruence {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
+    CategoryTheory.Congruence (functorRel A F) where
+  equivalence := {
+    refl  := fun f => rfl
+    symm  := fun h => h.symm
+    trans := fun h1 h2 => h1.trans h2 }
+  compLeft  := fun f h => by simp [functorRel, h]
+  compRight := fun h g => by simp [functorRel, h]
+
 /-- Governance quotient induced by a functor. -/
 abbrev GovernanceQuotient {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) : Type _ :=
-  CategoryTheory.Quotient (fun {X Y} f g => F.map f = F.map g)
+  CategoryTheory.Quotient (functorRel A F)
 
 /-- Quotient functor identifying exactly arrows with the same meaning. -/
 def governanceQuotientFunctor {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
     EvidenceCategory A ⥤ GovernanceQuotient A F :=
-  CategoryTheory.Quotient.functor (fun {X Y} f g => F.map f = F.map g)
+  CategoryTheory.Quotient.functor (functorRel A F)
 
 /-- Governance identification is a theorem by quotient construction. -/
 theorem governance_identifies_by_quotient
@@ -313,8 +328,7 @@ theorem governance_identifies_by_quotient
         (governanceQuotientFunctor A F).map g := by
   constructor
   · intro h
-    apply CategoryTheory.Quotient.sound
-    exact h
+    exact CategoryTheory.Quotient.sound h
   · intro h
     exact (CategoryTheory.Quotient.functor_map_eq_iff _ f g).1 h
 
