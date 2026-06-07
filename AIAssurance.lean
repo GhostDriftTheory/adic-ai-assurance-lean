@@ -304,11 +304,15 @@ def functorRel {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
 instance functorRelCongruence {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) :
     CategoryTheory.Congruence (functorRel A F) where
   equivalence := {
-    refl  := fun f => rfl
+    refl  := fun _ => rfl
     symm  := fun h => h.symm
     trans := fun h1 h2 => h1.trans h2 }
-  compLeft  := fun f h => by simp [functorRel, h]
-  compRight := fun h g => by simp [functorRel, h]
+  compLeft := fun {X Y Z} (f : X ⟶ Y) {g₁ g₂ : Y ⟶ Z} (hrel : functorRel A F g₁ g₂) => by
+    unfold functorRel at hrel ⊢
+    rw [F.map_comp, F.map_comp, hrel]
+  compRight := fun {X Y Z} {f₁ f₂ : X ⟶ Y} (g : Y ⟶ Z) (hrel : functorRel A F f₁ f₂) => by
+    unfold functorRel at hrel ⊢
+    rw [F.map_comp, F.map_comp, hrel]
 
 /-- Governance quotient induced by a functor. -/
 abbrev GovernanceQuotient {D : Type*} [Category D] (F : EvidenceCategory A ⥤ D) : Type _ :=
@@ -328,7 +332,7 @@ theorem governance_identifies_by_quotient
         (governanceQuotientFunctor A F).map g := by
   constructor
   · intro h
-    exact CategoryTheory.Quotient.sound h
+    exact CategoryTheory.Quotient.sound (show functorRel A F f g from h)
   · intro h
     exact (CategoryTheory.Quotient.functor_map_eq_iff _ f g).1 h
 
