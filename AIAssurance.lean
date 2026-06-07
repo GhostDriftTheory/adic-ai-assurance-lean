@@ -3,7 +3,7 @@ import Mathlib.CategoryTheory.Quotient
 import Mathlib.CategoryTheory.Yoneda
 import Mathlib.CategoryTheory.Adjunction.Basic
 import Mathlib.CategoryTheory.Functor.FullyFaithful
-import Mathlib.CategoryTheory.Functor.ReflectsIso.Basic
+import Mathlib.CategoryTheory.Functor.ReflectsIso
 
 /-!
 # Closed Grothendieck version of AI assurance
