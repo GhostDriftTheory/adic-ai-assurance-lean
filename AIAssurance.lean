@@ -509,17 +509,23 @@ def U : EObj ⥤ OObj where
     | .src => .src
     | .tgt => .tgt
   map := fun {X Y} f =>
-    match f with
-    | .idSrc => .idSrc
-    | .idTgt => .idTgt
-    | .traceA => OHom.op
-    | .traceB => OHom.op
-  map_id := by
-    intro X
-    cases X <;> rfl
-  map_comp := by
-    intro X Y Z f g
-    cases f <;> cases g <;> rfl
+    match X, Y, f with
+    | .src, .src, .idSrc => .idSrc
+    | .tgt, .tgt, .idTgt => .idTgt
+    | .src, .tgt, .traceA => OHom.op
+    | .src, .tgt, .traceB => OHom.op
+  map_id := fun X =>
+    match X with
+    | .src => rfl
+    | .tgt => rfl
+  map_comp := fun {X Y Z} f g =>
+    match X, Y, Z, f, g with
+    | .src, .src, .src, .idSrc, .idSrc => rfl
+    | .src, .src, .tgt, .idSrc, .traceA => rfl
+    | .src, .src, .tgt, .idSrc, .traceB => rfl
+    | .src, .tgt, .tgt, .traceA, .idTgt => rfl
+    | .src, .tgt, .tgt, .traceB, .idTgt => rfl
+    | .tgt, .tgt, .tgt, .idTgt, .idTgt => rfl
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
