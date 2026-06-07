@@ -362,8 +362,8 @@ instance : Category EObj where
     | .traceA, .idTgt => .traceA
     | .traceB, .idTgt => .traceB
     | .idTgt, .idTgt => .idTgt
-  id_comp := by intro X Y f; cases f <;> rfl
-  comp_id := by intro X Y f; cases f <;> rfl
+  id_comp := by intro X Y f; cases f <;> simp [CategoryStruct.id, CategoryStruct.comp]
+  comp_id := by intro X Y f; cases f <;> simp [CategoryStruct.id, CategoryStruct.comp]
   assoc := by intro X Y Z W f g h; cases f <;> cases g <;> cases h <;> rfl
 
 theorem traceA_ne_traceB : EHom.traceA ≠ EHom.traceB := by
@@ -379,7 +379,7 @@ inductive OObj : Type
 inductive OHom : OObj → OObj → Type
   | idSrc : OHom OObj.src OObj.src
   | idTgt : OHom OObj.tgt OObj.tgt
-  | op : OHom OObj.src OObj.tgt
+  | vis : OHom OObj.src OObj.tgt
 
 instance : Category OObj where
   Hom := OHom
@@ -390,11 +390,11 @@ instance : Category OObj where
   comp := fun {X Y Z} f g =>
     match f, g with
     | .idSrc, .idSrc => .idSrc
-    | .idSrc, .op => .op
-    | .op, .idTgt => .op
+    | .idSrc, .vis => .vis
+    | .vis, .idTgt => .vis
     | .idTgt, .idTgt => .idTgt
-  id_comp := by intro X Y f; cases f <;> rfl
-  comp_id := by intro X Y f; cases f <;> rfl
+  id_comp := by intro X Y f; cases f <;> simp [CategoryStruct.id, CategoryStruct.comp]
+  comp_id := by intro X Y f; cases f <;> simp [CategoryStruct.id, CategoryStruct.comp]
   assoc := by intro X Y Z W f g h; cases f <;> cases g <;> cases h <;> rfl
 
 /-- Forgetful operational view: both evidence traces become the same operation. -/
@@ -407,12 +407,12 @@ def U : EObj ⥤ OObj where
     match f with
     | .idSrc => .idSrc
     | .idTgt => .idTgt
-    | .traceA => OHom.op
-    | .traceB => OHom.op
-  map_id := by intro X; cases X <;> rfl
+    | .traceA => OHom.vis
+    | .traceB => OHom.vis
+  map_id := by intro X; cases X <;> simp [CategoryStruct.id]
   map_comp := by
     intro X Y Z f g
-    cases f <;> cases g <;> simp [Category.comp_id, Category.id_comp]
+    cases f <;> cases g <;> simp [CategoryStruct.comp, CategoryStruct.id]
 
 theorem trace_distinction_collapses :
     EHom.traceA ≠ EHom.traceB ∧
