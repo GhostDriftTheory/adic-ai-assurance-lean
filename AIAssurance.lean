@@ -332,9 +332,9 @@ theorem governance_identifies_by_quotient
         (governanceQuotientFunctor A F).map g := by
   constructor
   · intro h
-    exact CategoryTheory.Quotient.sound (show functorRel A F f g from h)
+    exact CategoryTheory.Quotient.sound (functorRel A F) h
   · intro h
-    exact (CategoryTheory.Quotient.functor_map_eq_iff _ f g).1 h
+    exact (CategoryTheory.Quotient.functor_map_eq_iff (functorRel A F) f g).1 h
 
 /-- Yoneda reflects isomorphisms. -/
 theorem yoneda_reflects_iso {X Y : EvidenceCategory A} (f : X ⟶ Y)
